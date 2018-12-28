@@ -35,12 +35,53 @@ def Crawling_CourseInformation(_dict):
     Number_List = []
     #ux-dropdown_hd  下拉框类名 ux-dropdown_cnt 
     try:
+        #classTime_List = browser.find_elements_by_class_name('f-thide')
+        time = 1 #第一次开课
+        temp_dict = {}
+        TeachersList = []
+        TeachersList_Label = browser.find_element_by_class_name('m-teachers_teacher-list').find_elements_by_class_name('cnt') #教师列表
+        for teacher in TeachersList_Label:
+            teacher_name = teacher.find_element_by_class_name('f-fc3').text
+            try:
+                lector_title = teacher.find_element_by_class_name('lector-title').text
+            except Exception as identifier:
+                lector_title = teacher.find_element_by_class_name('f-fc6').text
+            teacher_dict = {'Name':teacher_name,'Lector':lector_title}
+        TeachersList.append(teacher_dict)
+        _dict['Teachers'] = TeachersList
+
+        breadcrumb = browser.find_element_by_class_name('breadcrumb') #学科分类
+        # Classification_List = breadcrumb.find_elements_by_name('a')
+        # temp_Item = []
+        # for Classification in Classification_List:
+        #     temp_Item.append(Classification.text)
+        _dict['Classification'] = breadcrumb.text
+        bisJingpin = 'false'
+        try:
+            bisJingpin = browser.find_element_by_id('j-tag').text
+        except Exception as identifier:
+            bisJingpin = 'false'
+        if bisJingpin == 'false':
+            _dict['Bisjingpin'] = '否'
+        else:
+            _dict['Bisjingpin'] = '是'
+        # 课程大纲和课程概述
+        try:
+            ShowFull_btn = browser.find_element_by_class_name('u-icon-thin-caret-down')
+            ShowFull_btn.click()
+            CourseOverview = browser.find_elements_by_class_name('category-content')[0].text
+            _dict['CourseOverview'] = CourseOverview
+            CourseOutline = browser.find_elements_by_class_name('category-content')[1].text
+            _dict['CourseOutline'] = CourseOutline
+        except Exception as identifier:
+            CourseOverview = browser.find_elements_by_class_name('category-content')[0].text
+            _dict['CourseOverview'] = CourseOverview
+            CourseOutline = browser.find_elements_by_class_name('category-content')[1].text
+            _dict['CourseOutline'] = CourseOutline
         mouse_dropDown = browser.find_element_by_class_name('ux-dropdown_hd')
         if "第" not in mouse_dropDown.text:
             mouse_dropDown = browser.find_element_by_class_name('ux-dropdown_cnt')
         mouse_dropDown.click()
-        #classTime_List = browser.find_elements_by_class_name('f-thide')
-        time = 1 #第一次开课
         while True:
             temp_List = HarvestClasstime(browser)
             for classTime in temp_List:
@@ -54,18 +95,11 @@ def Crawling_CourseInformation(_dict):
                 #print(Number_Student)
                 Course_termInfo = browser.find_element_by_class_name('course-enroll-info_course-info_term-info_term-time').text #开课时间
                 Course_termWorkload = browser.find_element_by_class_name('course-enroll-info_course-info_term-workload').text # 学时安排
+                
                 temp_dict['Number'] = Number_Student
                 temp_dict['Course_termInfo'] = Course_termInfo
                 temp_dict['Course_termWorkload'] = Course_termWorkload
-                bisJingpin = 'false'
-                try:
-                    bisJingpin = browser.find_element_by_id('j-tag').text
-                except Exception as identifier:
-                    bisJingpin = 'false'
-                if bisJingpin == 'false':
-                    temp_dict['Bisjingpin'] = '否'
-                else:
-                    temp_dict['Bisjingpin'] = '是'
+            
                 Number_List.append(temp_dict)
                 mouse_dropDown = browser.find_element_by_class_name('ux-dropdown_hd')
                 if "第" not in mouse_dropDown.text:
@@ -152,12 +186,12 @@ def CrawlingByKeyword(keyWord):
                 for course_info in course_List:
                     temp_url = course_info.select('a')[0]#课程url
                     University_name = course_info.select('a')[1].text
-                    Teachers_name = ''
-                    TeacherList = course_info.select('.f-fc9')
-                    TeacherList.pop(0)
-                    for teacher in TeacherList:
-                        Teachers_name += teacher.text + ';'
-                    course_dict = {'name':temp_url.text,'url':temp_url['href'],'University_name':University_name,'Teachers_name':Teachers_name}
+                    #Teachers_name = ''
+                    #TeacherList = course_info.select('.f-fc9')
+                    #TeacherList.pop(0)
+                    #for teacher in TeacherList:
+                        #Teachers_name += teacher.text + ';'
+                    course_dict = {'name':temp_url.text,'url':temp_url['href'],'University_name':University_name}
                     Course_Name_url_List.append(course_dict)
                 print("下一页")
                     #print(temp_url.text)
@@ -168,8 +202,8 @@ def CrawlingByKeyword(keyWord):
                 for course_info in course_List:
                     temp_url = course_info.select('a')[0]#课程url
                     University_name = course_info.select('a')[1].text
-                    Teachers_name = course_info.select('a')[2].text
-                    course_dict = {'name':temp_url.text,'url':temp_url['href'],'University_name':University_name,'Teachers_name':Teachers_name}
+                    #Teachers_name = course_info.select('a')[2].text
+                    course_dict = {'name':temp_url.text,'url':temp_url['href'],'University_name':University_name}
                     Course_Name_url_List.append(course_dict)
                 return
 if __name__ == "__main__":
@@ -180,8 +214,10 @@ if __name__ == "__main__":
 
     with open("output.csv",'w') as file:
         for dict in Course_Name_url_List:
-            file.write(dict['name'] + ',' + dict['University_name'] + ',' + dict['Teachers_name'] + ',' + dict['url']
-            + ',' + dict['Number_List'][0]['Bisjingpin'] + ',')
+            file.write(dict['name'] + ',' + dict['University_name'] + ',' + dict['url'] + ',' + dict['Bisjingpin'] + ',')
+            file.write('\"' + dict['CourseOutline'] + '\"' + ',' + '\"' + dict['CourseOverview'] + '\"' + ',')
+            for teacher in dict['Teachers']:
+                file.write(teacher['Name'] + ',' + teacher['Lector'] + ',')
             for item in dict['Number_List']:
                 file.write(item['ClassTime'] + ',' + item['Number'] + ',' + item['Course_termInfo'] + ',' + item['Course_termWorkload'] + ',')
             file.write('\n')
