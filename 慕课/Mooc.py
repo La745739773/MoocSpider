@@ -47,7 +47,7 @@ def Crawling_CourseInformation(_dict):
             except Exception as identifier:
                 lector_title = teacher.find_element_by_class_name('f-fc6').text
             teacher_dict = {'Name':teacher_name,'Lector':lector_title}
-        TeachersList.append(teacher_dict)
+            TeachersList.append(teacher_dict)
         _dict['Teachers'] = TeachersList
 
         breadcrumb = browser.find_element_by_class_name('breadcrumb') #学科分类
@@ -111,25 +111,31 @@ def Crawling_CourseInformation(_dict):
         _dict['Number_List'] = Number_List
         return _dict
     except Exception as identifier:  #没有找到下拉框4
-        temp_ClassTime = browser.find_element_by_class_name('course-enroll-info_course-info_term-select_only-term')
-        tempNumber_Student = browser.find_element_by_class_name('course-enroll-info_course-enroll_price-enroll_enroll-count').text[2:-3]
-        tempCourse_termInfo = browser.find_element_by_class_name('course-enroll-info_course-info_term-info_term-time').text #开课时间
-        tempCourse_termWorkload = browser.find_element_by_class_name('course-enroll-info_course-info_term-workload').text # 学时安排
-        temp_dict = {'ClassTime':temp_ClassTime.text}
-        temp_dict['Number'] = tempNumber_Student
-        temp_dict['Course_termInfo'] = tempCourse_termInfo
-        temp_dict['Course_termWorkload'] = tempCourse_termWorkload
-        bisJingpin = 'false'
         try:
-            bisJingpin = browser.find_element_by_id('j-tag').text
+            temp_ClassTime = browser.find_element_by_class_name('course-enroll-info_course-info_term-select_only-term')
+            tempNumber_Student = browser.find_element_by_class_name('course-enroll-info_course-enroll_price-enroll_enroll-count').text[2:-3]
+            tempCourse_termInfo = browser.find_element_by_class_name('course-enroll-info_course-info_term-info_term-time').text #开课时间
+            tempCourse_termWorkload = browser.find_element_by_class_name('course-enroll-info_course-info_term-workload').text # 学时安排
+            temp_dict = {'ClassTime':temp_ClassTime.text}
+            temp_dict['Number'] = tempNumber_Student
+            temp_dict['Course_termInfo'] = tempCourse_termInfo
+            temp_dict['Course_termWorkload'] = tempCourse_termWorkload
+            #bisJingpin = 'false'
+            # try:
+            #     bisJingpin = browser.find_element_by_id('j-tag').text
+            # except Exception as identifier:
+            #     bisJingpin = 'false'
+            # if bisJingpin == 'false':
+            #     temp_dict['Bisjingpin'] = '否'
+            # else:
+            #     temp_dict['Bisjingpin'] = '是'
+            Number_List.append(temp_dict)
+            _dict['Number_List'] = Number_List
+            return _dict
         except Exception as identifier:
-            bisJingpin = 'false'
-        if bisJingpin == 'false':
-            temp_dict['Bisjingpin'] = '否'
-        else:
-            temp_dict['Bisjingpin'] = '是'
-        Number_List.append(temp_dict)
-        _dict['Number_List'] = Number_List
+            print(_dict['name'] + '  抓取失败')
+            return _dict
+            pass
         pass
 
     # for classTime in temp_List:
@@ -208,17 +214,25 @@ def CrawlingByKeyword(keyWord):
                 return
 if __name__ == "__main__":
     CrawlingByKeyword('地理')
-    #browser.close()
+    #browser.close()'
+    
     for dict in Course_Name_url_List:
-        dict = Crawling_CourseInformation(dict)
-
-    with open("output.csv",'w') as file:
-        for dict in Course_Name_url_List:
-            file.write(dict['name'] + ',' + dict['University_name'] + ',' + dict['url'] + ',' + dict['Bisjingpin'] + ',')
-            file.write('\"' + dict['CourseOutline'] + '\"' + ',' + '\"' + dict['CourseOverview'] + '\"' + ',')
-            for teacher in dict['Teachers']:
-                file.write(teacher['Name'] + ',' + teacher['Lector'] + ',')
-            for item in dict['Number_List']:
-                file.write(item['ClassTime'] + ',' + item['Number'] + ',' + item['Course_termInfo'] + ',' + item['Course_termWorkload'] + ',')
-            file.write('\n')
+        try:
+            _dict = Crawling_CourseInformation(dict)
+            with open("output.csv",'a') as file:
+                file.write('\n')
+                #try:
+                #except Exception as identifier:
+                    #file.write('\r\n')
+                #for dict in Course_Name_url_List:
+                file.write(_dict['name'] + ',' + _dict['University_name'] + ',' + _dict['url'] + ',' + _dict['Bisjingpin'] + ',' + _dict['Classification'] + ',')
+                file.write('\"' + _dict['CourseOutline'] + '\"' + ',' + '\"' + _dict['CourseOverview'] + '\"' + ',')
+                for teacher in _dict['Teachers']:
+                    file.write(teacher['Name'] + ',' + teacher['Lector'] + ',')
+                for item in _dict['Number_List']:
+                    file.write(item['ClassTime'] + ',' + item['Number'] + ',' + item['Course_termInfo'] + ',' + item['Course_termWorkload'] + ',')             
+        except Exception as identifier:
+            print(dict['name'] + '  输出失败')
+            continue
+    print('Done')
     pass
